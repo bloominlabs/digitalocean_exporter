@@ -17,7 +17,8 @@ type VolumeCollector struct {
 	client  *godo.Client
 	timeout time.Duration
 
-	Size *prometheus.Desc
+	Size    *prometheus.Desc
+	Mounted *prometheus.Desc
 }
 
 // NewVolumeCollector returns a new VolumeCollector.
@@ -36,6 +37,11 @@ func NewVolumeCollector(logger log.Logger, errors *prometheus.CounterVec, client
 			"Volume's size in bytes",
 			labels, nil,
 		),
+		Mounted: prometheus.NewDesc(
+			"digitalocean_volume_mounted",
+			"1 if the volume is mounted on a virtual machine, 0 otherwise",
+			labels, nil,
+		),
 	}
 }
 
@@ -43,6 +49,7 @@ func NewVolumeCollector(logger log.Logger, errors *prometheus.CounterVec, client
 // collected by this Collector.
 func (c *VolumeCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.Size
+	ch <- c.Mounted
 }
 
 // Collect is called by the Prometheus registry when collecting metrics.
@@ -60,6 +67,7 @@ func (c *VolumeCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	for _, vol := range volumes {
+		mounted := 0
 		labels := []string{
 			vol.ID,
 			vol.Name,
@@ -70,6 +78,17 @@ func (c *VolumeCollector) Collect(ch chan<- prometheus.Metric) {
 			c.Size,
 			prometheus.GaugeValue,
 			float64(vol.SizeGigaBytes*1024*1024*1024),
+			labels...,
+		)
+
+		if len(vol.DropletIDs) > 0 {
+			mounted = 1
+		}
+
+		ch <- prometheus.MustNewConstMetric(
+			c.Mounted,
+			prometheus.GaugeValue,
+			float64(mounted),
 			labels...,
 		)
 	}
