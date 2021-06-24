@@ -19,6 +19,7 @@ type AccountCollector struct {
 
 	DropletLimit    *prometheus.Desc
 	FloatingIPLimit *prometheus.Desc
+	VolumeLimit     *prometheus.Desc
 	EmailVerified   *prometheus.Desc
 	Active          *prometheus.Desc
 }
@@ -36,6 +37,11 @@ func NewAccountCollector(logger log.Logger, errors *prometheus.CounterVec, clien
 		DropletLimit: prometheus.NewDesc(
 			"digitalocean_account_droplet_limit",
 			"The maximum number of droplet you can use",
+			nil, nil,
+		),
+		VolumeLimit: prometheus.NewDesc(
+			"digitalocean_volume_limit",
+			"The maximum number of volumes you can use",
 			nil, nil,
 		),
 		FloatingIPLimit: prometheus.NewDesc(
@@ -61,6 +67,7 @@ func NewAccountCollector(logger log.Logger, errors *prometheus.CounterVec, clien
 func (c *AccountCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.DropletLimit
 	ch <- c.FloatingIPLimit
+	ch <- c.VolumeLimit
 	ch <- c.EmailVerified
 	ch <- c.Active
 }
@@ -88,6 +95,11 @@ func (c *AccountCollector) Collect(ch chan<- prometheus.Metric) {
 		c.FloatingIPLimit,
 		prometheus.GaugeValue,
 		float64(acc.FloatingIPLimit),
+	)
+	ch <- prometheus.MustNewConstMetric(
+		c.VolumeLimit,
+		prometheus.GaugeValue,
+		float64(acc.VolumeLimit),
 	)
 
 	var verified float64
