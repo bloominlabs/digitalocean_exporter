@@ -1,0 +1,36 @@
+name: digitalocean_exporter
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      EARTHLY_VERSION: v0.6.2
+      FORCE_COLOR: 1
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v2
+      - name: Cache
+        id: earthly-cache
+        uses: actions/cache@v2.1.7
+        with:
+          # A list of files, directories, and wildcard patterns to cache and restore
+          path: /usr/local/bin/earthly
+          # An explicit key for restoring and saving the cache
+          key: ${{ runner.os }}-earthly-${{ env.EARTHLY_VERSION }}
+      - name: Download latest earthly
+        if: steps.earthly-cache.outputs.cache-hit != 'true'
+        run: "sudo /bin/sh -c 'wget https://github.com/earthly/earthly/releases/download/${{ env.EARTHLY_VERSION }}/earthly-linux-amd64 -O /usr/local/bin/earthly && chmod +x /usr/local/bin/earthly'"
+      - name: build digitalocean_exporter docker image
+        run: |
+          /usr/local/bin/earthly --ci --push +docker
