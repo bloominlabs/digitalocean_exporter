@@ -38,8 +38,8 @@ docker:
   FROM alpine:latest
   RUN apk add --update ca-certificates
   COPY +build/digitalocean_exporter /usr/bin/digitalocean_exporter
-  COPY github.com/bloominlabs/bloominlabs-otel-collector+build/bloominlabs-otel-collector ./
+  COPY github.com/bloominlabs/bloominlabs-otel-collector+build/bloominlabs-otel-collector /usr/bin/bloominlabs-otel-collector
 
-  ENTRYPOINT ["/usr/bin/digitalocean_exporter"]
+  ENTRYPOINT ["/usr/bin/bloominlabs-otel-collector"]
   SAVE IMAGE digitalocean_exporter:latest
   SAVE IMAGE --push ghcr.io/bloominlabs/digitalocean_exporter:latest
