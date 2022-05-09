@@ -1,4 +1,5 @@
-# https://github.com/hashicorp/vault/pull/12358
+VERSION 0.6
+
 FROM golang:1.17
 WORKDIR /digitalocean_exporter
 
